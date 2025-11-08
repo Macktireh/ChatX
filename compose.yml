@@ -1,0 +1,30 @@
+name: "chatx_development"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: /docker/Dockerfile
+    image: chatx
+    container_name: chatx
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://admin:admin@chatx_local_postgres:5432/chat
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: chatx_local_postgres
+    volumes:
+      - chatx_local_db_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - "POSTGRES_USER=admin"
+      - "POSTGRES_PASSWORD=admin"
+      - "POSTGRES_DB=chat"
+
+volumes:
+  chatx_local_db_data: {}

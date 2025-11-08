@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Rejoindre le Chat{% endblock %} 
+{% block content %}
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="card w-full max-w-md bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-3xl font-bold text-center justify-center mb-6">
+          💬 Chat en Temps Réel
+        </h2>
+
+        <form action="/join" method="POST" class="space-y-4">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Nom d'utilisateur</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Entrez votre nom"
+              class="input input-bordered w-full"
+              required
+              maxlength="50"
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold"
+                >Choisissez votre avatar</span
+              >
+            </label>
+            <div class="grid grid-cols-4 gap-4 mx-auto my-2">
+              {% for avatar in avatars %}
+                <label class="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="avatar"
+                    value="{{ avatar }}"
+                    class="hidden peer"
+                    {% if loop.first %}checked{% endif %}
+                    required
+                  />
+                  <img src="{{ avatar }}" alt="avatar" class="size-12 text-4xl p-2 rounded-lg border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:bg-opacity-20 hover:bg-primary/50 transition-all text-center">
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="card-actions justify-end mt-6">
+            <button type="submit" class="btn btn-primary w-full">
+              Rejoindre le chat
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

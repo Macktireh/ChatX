@@ -1,0 +1,10 @@
+alembic
+fastapi
+httpx
+jinja2
+psycopg[binary]
+pydantic-settings
+python-multipart
+sqlalchemy
+sse-starlette
+uvicorn[standard]
