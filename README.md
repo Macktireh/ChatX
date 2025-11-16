@@ -37,5 +37,9 @@ docker compose up --build
 ### Start agents
 
 ```bash
+pdm run playwright install chromium
+```
+
+```bash
 pdm run agents
 ```
