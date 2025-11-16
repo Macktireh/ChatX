@@ -1,11 +1,12 @@
 import json
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from config.constants import AVATARS
 from config.database import get_db
 from schemas.message import MessageCreate, TypingEvent
 from services.bot_service import BotService
@@ -13,21 +14,6 @@ from services.message_service import MessageService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-
-AVATARS = [
-    "https://avatar.iran.liara.run/public/boy?username=1",
-    "https://avatar.iran.liara.run/public/girl?username=1",
-    "https://avatar.iran.liara.run/public/boy?username=2",
-    "https://avatar.iran.liara.run/public/girl?username=2",
-    "https://avatar.iran.liara.run/public/boy?username=3",
-    "https://avatar.iran.liara.run/public/girl?username=3",
-    "https://avatar.iran.liara.run/public/boy?username=4",
-    "https://avatar.iran.liara.run/public/girl?username=4",
-    "https://avatar.iran.liara.run/public/boy?username=5",
-    "https://avatar.iran.liara.run/public/girl?username=5",
-    "https://avatar.iran.liara.run/public/boy?username=6",
-    "https://avatar.iran.liara.run/public/girl?username=6",
-]
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -63,21 +49,27 @@ async def chat_page(request: Request, db: Session = Depends(get_db)):  # noqa: B
 
 
 @router.post("/api/messages")
-async def send_message(message_data: MessageCreate, db: Session = Depends(get_db)):  # noqa: B008
-    """Envoyer un message"""
-    # Créer le message de l'utilisateur
+async def send_message(
+    message_data: MessageCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)  # noqa: B008
+):
+    """Envoyer un message et déclencher une réponse bot en arrière-plan"""
+    # Créer le message utilisateur immédiatement
     user_message = MessageService.create_message(db, message_data)
 
-    # Vérifier si le bot doit répondre
-    if BotService.should_respond(message_data.message):
-        bot_response = BotService.generate_response(message_data.message, message_data.username)
+    bot_service = BotService()
 
-        bot_message_data = MessageCreate(
-            username=BotService.BOT_USERNAME, avatar=BotService.BOT_AVATAR, message=bot_response
+    # Vérifier si le bot doit répondre
+    if bot_service.should_respond(message_data.message):
+        # Ajouter la génération de réponse en tâche d'arrière-plan
+        background_tasks.add_task(
+            bot_service.process_bot_response,
+            db=db,
+            message=message_data.message,
+            username=message_data.username,
+            message_service=MessageService,
         )
 
-        MessageService.create_message(db, bot_message_data, is_bot=True)
-
+    # Retourner immédiatement la réponse sans attendre le bot
     return {"status": "success", "message": user_message.to_dict()}
 
 

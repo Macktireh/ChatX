@@ -1,53 +1,71 @@
-import random
-import re
+from google import genai
+from google.genai import types
+from sqlalchemy.orm import Session
+
+from config.settings import get_settings
+from models.message import Message
+from schemas.message import MessageCreate
+from services.message_service import MessageService
 
 
 class BotService:
     BOT_AVATAR = "https://ollaix-ui.pages.dev/chatbot.png"
     BOT_USERNAME = "ChatBot"
 
-    RESPONSES = {
-        "salut|bonjour|hello|hey": [
-            "👋 Salut {user} ! Comment puis-je t'aider ?",
-            "Hello {user} ! Ravi de te voir ici !",
-            "Bonjour {user} ! Que puis-je faire pour toi ?",
-        ],
-        "comment ça va|ça va": [
-            "Je vais très bien merci ! Et toi {user} ?",
-            "Parfaitement bien ! Je suis là pour t'aider 😊",
-        ],
-        "aide|help": [
-            "Je peux répondre à tes questions ! Mentionne-moi avec @bot suivi de ton message.",
-            "Voici ce que je peux faire : répondre à tes salutations, te donner l'heure, et discuter avec toi !",
-        ],
-        "heure|quelle heure": [
-            "Je ne peux pas voir l'heure exacte, mais tu peux la voir dans tes messages ! 🕐"
-        ],
-        "merci|thank": ["De rien {user} ! C'est un plaisir d'aider ! 😊", "Avec plaisir {user} !"],
-        "au revoir|bye|ciao": [
-            "Au revoir {user} ! À bientôt ! 👋",
-            "Bye {user} ! Reviens quand tu veux !",
-        ],
-    }
-
-    DEFAULT_RESPONSES = [
-        "Hmm, je ne suis pas sûr de comprendre {user}. Peux-tu reformuler ?",
-        "Intéressant {user} ! Peux-tu m'en dire plus ?",
-        "Je suis encore en apprentissage {user}. Essaie de me demander autre chose !",
-        "Désolé {user}, je n'ai pas de réponse à ça pour le moment 🤔",
-    ]
-
-    @classmethod
-    def should_respond(cls, message: str) -> bool:
+    def should_respond(self, message: str) -> bool:
         return "@bot" in message.lower()
 
-    @classmethod
-    def generate_response(cls, message: str, username: str) -> str:
-        clean_message = message.lower().replace("@bot", "").strip()
+    def generate_response(
+        self, message: str, username: str, conversation_context: list[Message]
+    ) -> str:
+        client = genai.Client(api_key=get_settings().gemini_api_key)
 
-        for pattern, responses in cls.RESPONSES.items():
-            if re.search(pattern, clean_message):
-                response = random.choice(responses)
-                return response.format(user=username)
+        system_prompt = """Tu es un assistant qui réponde aux demandes des utilisateurs. Si on te demande qui tu es, tu réponds que tu es un assistant qui réponde aux demandes des utilisateurs. Et tu répond en français à chaque fois.
 
-        return random.choice(cls.DEFAULT_RESPONSES).format(user=username)
+Règles IMPORTANTES :
+- Réponds UNIQUEMENT avec ton message
+- Sois naturel et conversationnel
+"""  # noqa: E501
+        if conversation_context:
+            context_text = "\n".join(
+                [
+                    f"{msg.username}: {msg.message}; is_bot: {msg.is_bot}"
+                    for msg in conversation_context
+                ]
+            )
+        else:
+            context_text = "Début de la discussion"
+
+        user_prompt = f"""Contexte de la conversation :
+{context_text}
+
+Génère maintenant TON message de réponse courte.
+Réponds UNIQUEMENT avec le message, sans guillemets ni préambule.
+Voici le demande de l'utilisateur :
+Message Utilisateur: {message}; Nom Utilisateur: {username}"
+"""
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(system_instruction=system_prompt),
+            contents=user_prompt,
+        )
+
+        return response.text  # type: ignore
+
+    def process_bot_response(
+        self, db: Session, message: str, username: str, message_service: MessageService
+    ) -> None:
+        """Traite la réponse du bot en arrière-plan"""
+        try:
+            conversation_context = message_service.get_recent_messages(db)
+            bot_response = self.generate_response(message, username, conversation_context)
+
+            bot_message_data = MessageCreate(
+                username=self.BOT_USERNAME, avatar=self.BOT_AVATAR, message=bot_response
+            )
+
+            message_service.create_message(db, bot_message_data, is_bot=True)
+        except Exception as e:
+            # Log l'erreur (ajoutez votre logger ici)
+            print(f"Erreur lors de la génération de réponse bot: {e}")

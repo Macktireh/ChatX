@@ -1,7 +1,9 @@
 alembic
 fastapi
 httpx
+google-genai
 jinja2
+playwright
 psycopg[binary]
 pydantic-settings
 python-multipart

@@ -1,11 +1,8 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from config.database import Base, engine
 from routes.chat import router as chat_router
 from routes.sse import router as sse_router
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Chat App")
 

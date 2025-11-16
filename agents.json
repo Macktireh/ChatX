@@ -1,0 +1,33 @@
+{
+  "theme_conversation": "L'impact de l'intelligence artificielle sur l'avenir du travail : Opportunités, défis et adaptation des compétences.",
+  "agents": [
+    {
+      "Name": "Ali Farah",
+      "Gender": "M",
+      "Specialist": "Développeur Python et passionné par l'IA et la data science",
+      "Role": "optimiste",
+      "Position": "Très favorable à l'IA. Voit principalement les opportunités et le potentiel de croissance. Enthousiaste et positif sur l'innovation technologique."
+    },
+    {
+      "Name": "Fatouma Ali",
+      "Gender": "F",
+      "Specialist": "Avocate et experte en droit du numérique RGPD",
+      "Role": "prudent",
+      "Position": "Favorable mais avec réserves. Souligne l'importance de la régulation, de l'éthique et de la protection des droits. Pose des questions critiques constructives."
+    },
+    {
+      "Name": "Ahmed Omar",
+      "Gender": "M",
+      "Specialist": "Chef d'entreprise dans le secteur tech et innovation",
+      "Role": "pragmatique",
+      "Position": "Neutre et équilibré. Se concentre sur les aspects pratiques et économiques. Cherche le juste milieu entre innovation et responsabilité."
+    },
+    {
+      "Name": "Leila Hassan",
+      "Gender": "F",
+      "Specialist": "Professeure en sciences sociales et futur du travail",
+      "Role": "critique",
+      "Position": "Sceptique et préoccupée. Met en avant les risques sociaux, les inégalités potentielles et les impacts négatifs sur l'emploi. Questionne le narratif dominant."
+    }
+  ]
+}
