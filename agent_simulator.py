@@ -149,7 +149,7 @@ Génère maintenant TON message de réponse courte.
 Réponds UNIQUEMENT avec le message, sans guillemets ni préambule."""
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             config=types.GenerateContentConfig(system_instruction=system_prompt),
             contents=user_prompt,
         )
@@ -217,9 +217,9 @@ class ConversationOrchestrator:
         for i, agent_data in enumerate(agents_data):
             # Choisir un avatar en fonction du genre
             if agent_data["Gender"] == "M":
-                avatar = f"https://avatar.iran.liara.run/public/boy?username={i + 1}"
+                avatar = f"/static/images/{i + 1}-icon-boy.png"
             else:
-                avatar = f"https://avatar.iran.liara.run/public/girl?username={i + 1}"
+                avatar = f"/static/images/{i + 1}-icon-girl.png"
 
             agents.append(
                 AgentConfig(
